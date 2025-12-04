@@ -1,0 +1,45 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    volumes:
+      - ./app:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=${MYSQL_DATABASE:-tododb}
+      - DB_USERNAME=${MYSQL_USER:-todo_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-todo_pw}
+    networks:
+      - todonet
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app/public:/var/www/html/public:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - todonet
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret_root_pw}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tododb}
+      MYSQL_USER: ${MYSQL_USER:-todo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-todo_pw}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - todonet
+
+volumes:
+  db_data:
+
+networks:
+  todonet:
